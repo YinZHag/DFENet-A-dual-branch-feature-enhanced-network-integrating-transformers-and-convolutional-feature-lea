@@ -30,10 +30,27 @@ This code has been tested with `Pytorch` and NVIDIA RTX A6000 GPU.
 ## Inference
 If you want to test the pretrained model using your own well-categorized dataset, please define your own data generator for `test.py` and perform the following script.
 ```
-python test.py --mri_file ./your_mri_dataset_root --ct_file ./your_ct_dataset_root
-python test.py --mri_file ./your_mri_dataset_root --pet_file ./your_pet_dataset_root
-python test.py --mri_file ./your_mri_dataset_root --spect_file ./your_spect_dataset_root
+python test.py --model_path ./ckpt_model.pth --mri_file ./your_mri_dataset_root --ct_file ./your_ct_dataset_root
+python test.py --model_path ./ckpt_model.pth --mri_file ./your_mri_dataset_root --pet_file ./your_pet_dataset_root
+python test.py --model_path ./ckpt_model.pth --mri_file ./your_mri_dataset_root --spect_file ./your_spect_dataset_root
 ```
+
+
+## Training on the large-scale scene images dataset for image-reconstructing task
+If you want to train the encoder-decoder based model on the large-scale scene datasets, please define your own data generator for `model_train.py` and perform the following script.
+```
+python model_train.py --train_path ./your_dataset_path
+```
+
+
+## Acknowledgement
+Some codes in this repository are modified from [VIT](https://github.com/WZMIAOMIAO/deep-learning-for-image-processing/tree/master/pytorch_classification/vision_transformer) and [RFN-NEST](https://github.com/hli1221/imagefusion-rfn-nest).
+
+
+#### Keywords
+* Keywords: multimodal medical image fusion, convolutional neural network, vision transformer, feature fuser, local energy and gradient
+
+
 
 
 
