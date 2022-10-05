@@ -24,7 +24,7 @@ This code has been tested with `Pytorch` and NVIDIA RTX A6000 GPU.
 ## Data preparation
 1.You can obtain the training MS-COCO 2014 Datasets from the hyperlink[[link](https://cocodataset.org/#download)].
 
-2.You can obtain the test medical image Datasets from the hyeprlink[[link](www.med.harvard.edu/AANIIB/home.html)], and we have also prepared some test cases in the file directory of Data.
+2.You can obtain the test medical image Datasets from the hyeprlink[[link](http://www.med.harvard.edu/AANlIB/home.html)], and we have also prepared some test cases in the file directory of Data.
 
 
 ## Inference
