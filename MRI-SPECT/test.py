@@ -6,21 +6,34 @@ import torch
 from utils import L1_Norm, LEM, LEGM
 from net import Net
 import cv2
+import argparse
 
 flag = 'LEGM'
 
+
+def hyper_parametrs():
+    parse = argparse.ArgumentParser(description='Created by liam Zhang')
+    parse.add_argument('--model_path',type=str,default='',\
+                       help='the pretrained model path')
+    parse.add_argument('--mri_file',type=str,default=r'',\
+                       help='the test mri dataset path')
+    parse.add_argument('--spect_file',type=str,default=r'', \
+                       help='the test spect dataset path')
+    args = parse.parse_args()
+    return args
+
+
 if __name__ == '__main__':
+    args = hyper_parametrs()
     print('==>Loading the model')
     model = Net()
-    model_path = r'../Checkpoints/ckpt_10_0.5.pth'
-    if not os.path.exists(model_path):
+    if not os.path.exists(args.model_path):
         raise Exception('No pretrained model could be found!')
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-
+    model.load_state_dict(torch.load(args.model_path, map_location=torch.device('cpu')))
 
     print('==>Loading the test dataset')
-    mri_file='../Data/MRI-T1_T2'
-    spect_file='../Data/SPECT-Tc'
+    mri_file= args.mri_file
+    spect_file= args.spect_file
 
     mri=[]
     spect=[]
@@ -73,8 +86,8 @@ if __name__ == '__main__':
             spect[i] *= 255.
             spect[i] = spect[i].astype(np.uint8)
             result = cv2.cvtColor(spect[i],cv2.COLOR_YCrCb2BGR)
-            cv2.imwrite('../results'+'/'+str(i+1)+'.jpg',result)
-
+            cv2.imwrite('./MRI-SPECT/results'+'/'+str(i+1)+'.jpg',result)
+        
     end=time.time()
     print('the total time: %.4fs'%(end-start))
 
