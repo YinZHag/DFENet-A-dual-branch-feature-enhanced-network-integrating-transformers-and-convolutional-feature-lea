@@ -3,7 +3,7 @@ sys.path.append('..')
 import time
 import numpy as np
 import torch
-from utils import L1_Norm, LEM, LEGM
+from common.utils import L1_Norm, LEM, LEGM
 from net import Net
 import cv2
 import argparse
