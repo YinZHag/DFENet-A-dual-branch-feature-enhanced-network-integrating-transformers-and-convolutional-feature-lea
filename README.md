@@ -12,11 +12,15 @@
 
 ## Requirements
 - CUDA 11.3
-- Python 3.7 (or later)
-- Pytorch 1.10.1
-- Torchvision 0.11.2
-- OpenCV 4.5.5
+- Python 3.9 (or later)
+- Pytorch 2.6.0 (or later)
+- Torchvision 0.21.0 (or later)
+- OpenCV 4.10 (or later)
 
+See `requirements.txt` for the full list. The original code was developed against
+Pytorch 1.10.1 / Torchvision 0.11.2 / OpenCV 4.5.5; those versions are no longer
+recommended because they contain known vulnerabilities and do not support
+`torch.load(..., weights_only=True)`, which the checkpoint loading code now relies on.
 
 This code has been tested with `Pytorch` and NVIDIA RTX A6000 GPU.
 

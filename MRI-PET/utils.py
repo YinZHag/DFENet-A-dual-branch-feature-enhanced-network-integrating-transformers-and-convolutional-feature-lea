@@ -9,6 +9,8 @@ from torchvision.models import vgg19
 
 import numpy as np
 
+import os
+import urllib.parse
 import urllib.request
 import urllib
 from http.client import IncompleteRead, RemoteDisconnected
@@ -205,7 +207,11 @@ def new_fusion_rule1(feature_maps1,feature_maps2)->torch.FloatTensor:
 
 def requestImg(url, name, num_retries=3):
     img_src = url
-    # print(img_src)
+    if urllib.parse.urlparse(img_src).scheme not in ('http', 'https'):
+        raise ValueError('only http(s) URLs are supported: %s' % img_src)
+    filename = os.path.basename(name) + '.png'
+    if not filename or filename == '.png':
+        raise ValueError('invalid output name: %s' % name)
     header = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) \
     AppleWebKit/537.36 (KHTML, like Gecko) \
@@ -216,7 +222,6 @@ def requestImg(url, name, num_retries=3):
     req = urllib.request.Request(url=img_src, headers=header)
     try:
         response = urllib.request.urlopen(req) # 得到访问的网址
-        filename = name + '.png'
         with open(filename, "wb") as f:
             content = response.read() # 获得图片
             f.write(content) # 保存图片

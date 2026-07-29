@@ -161,7 +161,7 @@ if __name__=='__main__':
         device = torch.device('cpu')
         model.to(device)
     if arg.model_path is not None:
-        model.load_state_dict(torch.load(arg.model_path))
+        model.load_state_dict(torch.load(arg.model_path, weights_only=True))
         model.eval()
     pr = [p for p in model.parameters() if p.requires_grad]
     optimizer = AdamW(pr, lr=arg.lr_rate, weight_decay=5E-5)

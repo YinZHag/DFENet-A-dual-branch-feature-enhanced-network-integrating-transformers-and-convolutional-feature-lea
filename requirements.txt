@@ -1,0 +1,10 @@
+torch>=2.6.0
+torchvision>=0.21.0
+opencv-python>=4.10.0.84
+numpy>=1.26.4
+pillow>=10.3.0
+matplotlib>=3.8.4
+scipy>=1.11.4
+scikit-image>=0.22.0
+tqdm>=4.66.3
+tensorboard>=2.16.2

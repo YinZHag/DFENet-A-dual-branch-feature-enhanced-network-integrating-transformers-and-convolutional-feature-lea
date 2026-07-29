@@ -4,7 +4,7 @@ import time
 import cv2
 import numpy as np
 import torch
-from utils import L1_Norm, LEM, LEGM,
+from utils import L1_Norm, LEM, LEGM
 from net import Net
 import argparse
 flag = 'LEM'
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     model = Net()
     if not os.path.exists(args.model_path):
         raise Exception('No pretrained model could be found!')
-    model.load_state_dict(torch.load(args.model_path, map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load(args.model_path, map_location=torch.device('cpu'), weights_only=True))
 
     print('==>Loading the test dataset')
     mri_file = args.mri_file
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         ct_list=sorted(os.listdir(ct_file))
         ct_list.sort(key=lambda x:int(x.split('.')[0]))
         for ct_name in ct_list:
-            if ct_name.split('.')[-1]=='jpg' or ct_name.split('.')[-1]=='png' or ct_name.split('.')[-1]=='tif' or t_name.split('.')[-1]=='svg':
+            if ct_name.split('.')[-1]=='jpg' or ct_name.split('.')[-1]=='png' or ct_name.split('.')[-1]=='tif' or ct_name.split('.')[-1]=='svg':
                 ct_name=os.path.join(ct_file,ct_name)
                 ct_arr=cv2.imread(ct_name,cv2.IMREAD_GRAYSCALE)
                 ct_arr=ct_arr.astype(np.float32)/255.
