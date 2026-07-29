@@ -159,7 +159,11 @@ def isGray(img:np.ndarray)->bool:
 def new_fusion_rule(source_img1_name,source_img2_name,device)->torch.FloatTensor:
     vgg_model=VGG19(device=device)
     src1=cv.imread(source_img1_name)
+    if src1 is None:
+        raise OSError('The image could not be decoded: {}'.format(source_img1_name))
     src2=cv.imread(source_img2_name)
+    if src2 is None:
+        raise OSError('The image could not be decoded: {}'.format(source_img2_name))
     if not isGray(src1):
         src1=cv.cvtColor(src1,cv.COLOR_BGR2YCrCb)
         src1_new=src1[:,:,0]
@@ -215,21 +219,16 @@ def requestImg(url, name, num_retries=3):
     # Request类可以使用给定的header访问URL
     req = urllib.request.Request(url=img_src, headers=header)
     try:
-        response = urllib.request.urlopen(req) # 得到访问的网址
-        filename = name + '.png'
-        with open(filename, "wb") as f:
+        with urllib.request.urlopen(req) as response: # 得到访问的网址
             content = response.read() # 获得图片
-            f.write(content) # 保存图片
-            response.close()
-    except HTTPError as e: # HTTP响应异常处理
-        print(e.reason)
-    except URLError as e: # 一定要放到HTTPError之后，因为它包含了前者
-        print(e.reason)
-    except IncompleteRead or RemoteDisconnected as e:
-        if num_retries == 0: # 重连机制
-            return
-        else:
-            requestImg(url, name, num_retries-1)
+    except (IncompleteRead, RemoteDisconnected):
+        if num_retries <= 0: # 重连机制
+            raise
+        return requestImg(url, name, num_retries-1)
+    filename = name + '.png'
+    with open(filename, "wb") as f:
+        f.write(content) # 保存图片
+    return filename
 
 
 class Scope(object):

@@ -6,6 +6,8 @@ import decompose
 import pathlib
 
 def detail_enhance(img: np.ndarray):
+    if not isinstance(img, np.ndarray) or img.size == 0:
+        raise ValueError('detail_enhance requires a non-empty numpy image array')
     img = cv2.resize(img, (256, 256), fx=1, fy=1, interpolation=cv2.INTER_AREA)
     imgY = img.copy()
     M, Ds = decompose.edge_preserving_decompose(imgY, 1)
@@ -19,7 +21,8 @@ def load_train_img(ImgFilePath):
     """
     :param ImgFilePath: the input path of the training dataset
     """
-    assert isinstance(ImgFilePath,str) or isinstance(ImgFilePath,pathlib.Path),f'The ImgFilePath shoube be required for str or pathlib type!'
+    if not isinstance(ImgFilePath,(str,pathlib.Path)):
+        raise TypeError('The ImgFilePath should be required for str or pathlib type, got {}'.format(type(ImgFilePath).__name__))
     img=Image.open(ImgFilePath).convert('L')
     index=np.random.randint(1,4,1)
     if index==1:
@@ -41,10 +44,10 @@ def load_test_img(Mri_File_Path,Pet_File_Path):
     :param Mri_file_path: the input file path of Magnetic Resonance Imageing
     :param Pet_file_path: the input file path of Positron Emission Tomography Imaging
     """
-    assert isinstance(Mri_File_Path, str) or isinstance(Mri_File_Path,
-                                                      pathlib.Path), f'The Mri_File_Path shoube be required for str or pathlib type!'
-    assert isinstance(Pet_File_Path, str) or isinstance(Pet_File_Path,
-                                                      pathlib.Path), f'The Pet_File_Path shoube be required for str or pathlib type!'
+    if not isinstance(Mri_File_Path,(str,pathlib.Path)):
+        raise TypeError('The Mri_File_Path should be required for str or pathlib type, got {}'.format(type(Mri_File_Path).__name__))
+    if not isinstance(Pet_File_Path,(str,pathlib.Path)):
+        raise TypeError('The Pet_File_Path should be required for str or pathlib type, got {}'.format(type(Pet_File_Path).__name__))
     mri=Image.open(Mri_File_Path).convert('L')
     pet=Image.open(Pet_File_Path).convert('L')
     index=np.random.randint(1,4,1)

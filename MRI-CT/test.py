@@ -4,10 +4,14 @@ import time
 import cv2
 import numpy as np
 import torch
-from utils import L1_Norm, LEM, LEGM,
+from utils import L1_Norm, LEM, LEGM
 from net import Net
 import argparse
 flag = 'LEM'
+
+IMAGE_SUFFIXES = ('.jpg', '.png', '.tif', '.svg')
+FUSION_STRATEGIES = ('Addition', 'Average', 'Maximum', 'L1_Norm', 'LEM', 'LEGM')
+RESULT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results')
 
 
 def hyper_parametrs():
@@ -21,40 +25,58 @@ def hyper_parametrs():
     args = parse.parse_args()
     return args
 
+
+def list_image_files(directory, description):
+    if not os.path.isdir(directory):
+        raise NotADirectoryError('The {} dataset directory does not exist: {!r}'.format(description, directory))
+    names = [name for name in os.listdir(directory) if name.lower().endswith(IMAGE_SUFFIXES)]
+    if not names:
+        raise FileNotFoundError('No {} image found in {!r}, supported suffixes are {}'.format(
+            description, directory, ', '.join(IMAGE_SUFFIXES)))
+    try:
+        names.sort(key=lambda x: int(x.split('.')[0]))
+    except ValueError as error:
+        raise ValueError('The {} images must be named with their index, e.g. 1.jpg, but got {}'.format(
+            description, sorted(names))) from error
+    return [os.path.join(directory, name) for name in names]
+
+
+def read_gray_image(path):
+    array = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    if array is None:
+        raise OSError('The image could not be decoded: {}'.format(path))
+    if array.shape != (256, 256):
+        raise ValueError('The image {} must be 256x256 but its shape is {}'.format(path, array.shape))
+    return array
+
+
 if __name__ == '__main__':
     args = hyper_parametrs()
+    if flag not in FUSION_STRATEGIES:
+        raise ValueError('Unknown fusion strategy {!r}, expected one of {}'.format(flag, ', '.join(FUSION_STRATEGIES)))
+
     print('==>Loading the model')
     model = Net()
     if not os.path.exists(args.model_path):
-        raise Exception('No pretrained model could be found!')
+        raise FileNotFoundError('No pretrained model could be found at {!r}'.format(args.model_path))
     model.load_state_dict(torch.load(args.model_path, map_location=torch.device('cpu')))
 
     print('==>Loading the test dataset')
-    mri_file = args.mri_file
-    ct_file = args.ct_file
+    mri_paths = list_image_files(args.mri_file, 'mri')
+    ct_paths = list_image_files(args.ct_file, 'ct')
+    if len(mri_paths) != len(ct_paths):
+        raise ValueError('The mri and ct datasets must be paired but hold {} and {} images'.format(
+            len(mri_paths), len(ct_paths)))
+
     mri = []
     ct = []
+    for mri_path, ct_path in zip(mri_paths, ct_paths):
+        mri_arr = read_gray_image(mri_path).astype(np.float32)/255.
+        mri.append(torch.from_numpy(np.expand_dims(mri_arr,axis=0)).view(1,1,256,256))
+        ct_arr = read_gray_image(ct_path).astype(np.float32)/255.
+        ct.append(torch.from_numpy(np.expand_dims(ct_arr,axis=0)).view(1,1,256,256))
 
-    if os.path.exists(mri_file) and os.path.isdir(mri_file):
-        mri_list=sorted(os.listdir(mri_file))
-        mri_list.sort(key=lambda x:int(x.split('.')[0]))
-        for mri_name in mri_list:
-            if mri_name.split('.')[-1]=='jpg' or mri_name.split('.')[-1]=='png' or mri_name.split('.')[-1]=='tif' or mri_name.split('.')[-1]=='svg':
-                mri_name = os.path.join(mri_file,mri_name)
-                mri_arr = cv2.imread(mri_name,cv2.IMREAD_GRAYSCALE)
-                mri_arr = mri_arr.astype(np.float32)/255.
-                mri.append(torch.from_numpy(np.expand_dims(mri_arr,axis=0)).view(1,1,256,256))
-
-    if os.path.exists(ct_file) and os.path.isdir(ct_file):
-        ct_list=sorted(os.listdir(ct_file))
-        ct_list.sort(key=lambda x:int(x.split('.')[0]))
-        for ct_name in ct_list:
-            if ct_name.split('.')[-1]=='jpg' or ct_name.split('.')[-1]=='png' or ct_name.split('.')[-1]=='tif' or t_name.split('.')[-1]=='svg':
-                ct_name=os.path.join(ct_file,ct_name)
-                ct_arr=cv2.imread(ct_name,cv2.IMREAD_GRAYSCALE)
-                ct_arr=ct_arr.astype(np.float32)/255.
-                ct.append(torch.from_numpy(np.expand_dims(ct_arr,axis=0)).view(1,1,256,256))
-
+    os.makedirs(RESULT_DIR, exist_ok=True)
     start=time.time()
     with torch.no_grad():
         model.eval()
@@ -71,20 +93,16 @@ if __name__ == '__main__':
                 f = L1_Norm(L1,H1)
             elif flag == 'LEM':
                 f = LEM(L1,H1)
-            elif flag == 'LEGM':
+            else:
                 f = LEGM(L1,H1)
             res = model.Transform_Decoder(f)
             res = res[0][0].detach().numpy()
             res = (res - res.min()) / (res.max() - res.min())
             res *= 255.
             result=np.uint8(res)
-            cv2.imwrite('./MRI-CT/results'+'/'+str(i+1)+'.jpg',result)
+            result_path = os.path.join(RESULT_DIR, str(i+1)+'.jpg')
+            if not cv2.imwrite(result_path, result):
+                raise OSError('The fused image could not be written to {}'.format(result_path))
 
     end=time.time()
     print('the total time: %.4fs'%(end-start))
-
-
-
-
-
-
