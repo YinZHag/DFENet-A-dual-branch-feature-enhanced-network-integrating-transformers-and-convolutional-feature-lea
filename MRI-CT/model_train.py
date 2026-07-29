@@ -1,3 +1,4 @@
+import os
 import sys
 sys.path.append('..')
 import torch
@@ -18,6 +19,7 @@ from utils import LEM
 import math
 import  copy
 import numpy as np
+CHECKPOINT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'Checkpoints')
 parse=argparse.ArgumentParser(description='Liam zhang')
 parse.add_argument('--train_path',type=str,default='D:\ZY\data\Ms_coco train2014\train2014',help='Train PATH')
 # parse.add_argument('--train_path',type=str,default='D:/ZY/data/medical_images',help='Train PATH')
@@ -62,6 +64,8 @@ def train_one_epoch(model,optimizer,dataloader,device,epoch,param=0.8):
     loss_fea=torch.zeros(1).to(device)
     loss_gradient=torch.zeros(1).to(device)
     loss_all=torch.zeros(1).to(device)
+    if len(dataloader)==0:
+        raise RuntimeError('The training dataloader is empty, nothing could be trained')
     optimizer.zero_grad()
     data_loader=tqdm(dataloader,file=sys.stdout)
     #TODO:Second-order Gradient operator
@@ -83,8 +87,7 @@ def train_one_epoch(model,optimizer,dataloader,device,epoch,param=0.8):
         data_loader.desc="[train epochs {}] gradient_loss{:.6f} fea_loss {:.6f}  total_loss {:.6f} ".format(epoch+1,loss_gradient.item()/(step+1),loss_fea.item()/(step+1)
                                                                                                         ,loss_all.item()/(step+1))
         if not torch.isfinite(total_loss):
-            print('WARNING: non-finite loss, ending training ', total_loss.item())
-            sys.exit(1)
+            raise RuntimeError('non-finite loss, ending training: {}'.format(total_loss.item()))
         optimizer.step()
         optimizer.zero_grad()
     return loss_fea.item()/(step+1),loss_gradient.item()/(step+1),loss_all.item()/(step+1)
@@ -115,6 +118,8 @@ def fine_tune(maml,dataloader,device,epoch):
 @torch.no_grad()
 def eval_one_epoch(model,dataloader,device,epoch):
     model.eval()
+    if len(dataloader)==0:
+        raise RuntimeError('The evaluation dataloader is empty, nothing could be evaluated')
     ssim_loss=msssim
     mse_loss=nn.MSELoss()
     dataloader=tqdm(dataloader,file=sys.stdout)
@@ -168,6 +173,7 @@ if __name__=='__main__':
     lf = lambda x: ((1 + math.cos(x * math.pi / arg.train_epoch)) / 2) * (1 - arg.lrf) + arg.lrf  # cosine
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)
     tb_writer = SummaryWriter(log_dir='../log_runs')
+    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
     eval_stand = 0
     best_ws = copy.deepcopy(model.state_dict())
     start = time.time()
@@ -189,10 +195,10 @@ if __name__=='__main__':
         tb_writer.add_scalar(tags[3], train_loss_all, epoch+1)
         tb_writer.add_scalar(tags[5], eval_psnr, epoch+1)
         tb_writer.add_scalar(tags[6], eval_all, epoch+1)
-        torch.save(model.state_dict(), '../Checkpoints/' + 'ckpt_' + str(epoch +1) + '_0.5.pth')
+        torch.save(model.state_dict(), os.path.join(CHECKPOINT_DIR, 'ckpt_' + str(epoch +1) + '_0.5.pth'))
     model.load_state_dict(best_ws)
     model.eval()
-    torch.save(model.state_dict(), '../Checkpoints/best_model_ws.pth')
+    torch.save(model.state_dict(), os.path.join(CHECKPOINT_DIR, 'best_model_ws.pth'))
     print('training fininshed!!!')
     end = time.time()
     print('total consuming times: {:.4f}s'.format(end-start))

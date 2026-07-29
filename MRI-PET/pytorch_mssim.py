@@ -34,13 +34,19 @@ def ssim(img1, img2, window_size=11, window=None, size_average=True, full=False,
     (_, channel1, height1, width1) = img1.size()
     (_,channel2,height2,width2)=img2.size()
     max_channel=max(channel1,channel2)
-    if height1!=height2 and width2!=width1:
-        assert  "input images sizes is not equal!"
+    if height1!=height2 or width1!=width2:
+        raise ValueError('input images sizes is not equal: {}x{} and {}x{}'.format(height1,width1,height2,width2))
     if window is None:
         real_size = min(window_size, height1, width1)
         window1 = create_window(real_size, channel=channel1).to(img1.device)
         window2=create_window(real_size, channel=channel2).to(img1.device)
         max_window=create_window(real_size, channel=max_channel).to(img1.device)
+    else:
+        real_size = window.size(-1)
+        window = window.to(img1.device)
+        window1 = window if window.size(0)==channel1 else create_window(real_size, channel=channel1).to(img1.device)
+        window2 = window if window.size(0)==channel2 else create_window(real_size, channel=channel2).to(img1.device)
+        max_window = window if window.size(0)==max_channel else create_window(real_size, channel=max_channel).to(img1.device)
     mu1 = F.conv2d(img1, window1, padding=padd, groups=channel1)
     mu2 = F.conv2d(img2, window2, padding=padd, groups=channel2)
 
