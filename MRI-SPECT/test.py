@@ -29,7 +29,7 @@ if __name__ == '__main__':
     model = Net()
     if not os.path.exists(args.model_path):
         raise Exception('No pretrained model could be found!')
-    model.load_state_dict(torch.load(args.model_path, map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load(args.model_path, map_location=torch.device('cpu'), weights_only=True))
 
     print('==>Loading the test dataset')
     mri_file= args.mri_file
